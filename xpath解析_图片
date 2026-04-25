@@ -1,0 +1,35 @@
+import requests
+from lxml import etree
+import os
+
+if __name__=='__main__':
+	url='https://pic.netbian.com/4kmeinv/'
+	head = {
+    "Referer": "https://pic.netbian.com/",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+}
+
+	response=requests.get(url=url,headers=head)
+	#手动设定响应数据的编码格式
+	response.encoding='utf-8'
+	
+	page_text=response.text
+	
+	#解析数据：src的属性值 alt属性值
+	tree=etree.HTML(page_text)
+	li_list = tree.xpath('//ul[@class="clearfix"]/li')
+	
+	#创建一个文件夹
+	if not os.path.exists('./图片'):
+		os.mkdir('./图片')
+	
+	for li in li_list:
+		img_src='https://pic.netbian.com'+li.xpath('.//a/img/@src')[0] #[0]的目的是将列表转换为字符串
+		img_name=li.xpath('.//a/img/@alt')[0]+'.jpg'
+		#通用处理中文乱码的解决方案
+		#img_name=img_name.encode('iso-8859-1').decode('gbk')
+		#print(img_name,img_src)
+		img_data=requests.get(url=img_src,headers=head).content
+		with open('图片/'+img_name,'wb') as f:
+			f.write(img_data)
+			print(img_name,'下载成功！')
